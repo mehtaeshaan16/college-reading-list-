@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>College Reading List Tracker</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .badge-to-read {
+      background-color: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+    .badge-reading {
+      background-color: #ede9fe;
+      color: #5b21b6;
+      border: 1px solid #ddd6fe;
+    }
+    .badge-done {
+      background-color: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    @keyframes pulseHighlight {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.35);
+        transform: scale(1.02);
+      }
+    }
+    .card-highlighted {
+      animation: pulseHighlight 1.4s ease-in-out 2;
+      border-color: #6366f1 !important;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
+    <div class="max-w-4xl mx-auto px-4 py-4 sm:px-6 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-slate-900 leading-tight">Campus Reads</h1>
+          <p class="text-xs text-slate-500">College Student Reading Tracker</p>
+        </div>
+      </div>
+      <div class="text-xs font-medium text-slate-500 bg-slate-100 py-1.5 px-3 rounded-full border border-slate-200">
+        Local Storage Active
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl w-full mx-auto px-4 py-6 sm:px-6 flex-1 flex flex-col gap-6">
+    <!-- Duplicate Warning Notification Alert Banner -->
+    <div id="duplicateAlert" class="hidden items-start sm:items-center justify-between gap-3 p-4 bg-amber-50 border border-amber-300 text-amber-900 rounded-2xl transition">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-amber-200 text-amber-800 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-semibold" id="duplicateAlertText">This book already exists in your list!</p>
+          <p class="text-xs text-amber-700 mt-0.5">Duplicate titles are not allowed. You can locate, edit, or delete the existing book instead.</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+        <button 
+          id="duplicateLocateBtn" 
+          type="button" 
+          class="text-xs font-semibold px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition"
+        >
+          View Book
+        </button>
+        <button 
+          id="duplicateDismissBtn" 
+          type="button" 
+          class="p-1 text-amber-600 hover:text-amber-800 rounded-lg hover:bg-amber-100 transition"
+          aria-label="Dismiss warning"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Add Book Card Form -->
+    <section class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
+      <h2 class="text-base font-semibold text-slate-900 mb-3 flex items-center gap-2">
+        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Add a Book to Your List
+      </h2>
+      <form id="addBookForm" class="flex flex-col sm:flex-row gap-3">
+        <div class="flex-1">
+          <input 
+            type="text" 
+            id="bookTitleInput" 
+            placeholder="e.g. Introduction to Algorithms, Clean Code..." 
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition"
+            required
+          />
+        </div>
+        <div class="w-full sm:w-44">
+          <select 
+            id="bookStatusInput" 
+            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white font-medium text-slate-700 transition"
+          >
+            <option value="to-read">To Read</option>
+            <option value="reading">Reading</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+        <button 
+          type="submit" 
+          class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-medium text-sm rounded-xl transition shadow-sm"
+        >
+          <span>Add Book</span>
+        </button>
+      </form>
+    </section>
+
+    <section class="flex flex-wrap items-center gap-2 pb-1">
+      <button 
+        type="button" 
+        data-filter="all" 
+        class="filter-btn active inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition bg-slate-900 text-white shadow-sm"
+      >
+        <span>All</span>
+        <span id="countAll" class="px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-100 text-xs">0</span>
+      </button>
+
+      <button 
+        type="button" 
+        data-filter="to-read" 
+        class="filter-btn inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+      >
+        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+        <span>To Read</span>
+        <span id="countToRead" class="px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs">0</span>
+      </button>
+
+      <button 
+        type="button" 
+        data-filter="reading" 
+        class="filter-btn inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+      >
+        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+        <span>Reading</span>
+        <span id="countReading" class="px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs">0</span>
+      </button>
+
+      <button 
+        type="button" 
+        data-filter="done" 
+        class="filter-btn inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+      >
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span>Done</span>
+        <span id="countDone" class="px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs">0</span>
+      </button>
+    </section>
+
+    <div id="booksGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Cards dynamically rendered here -->
+    </div>
+
+    <!-- Empty State View -->
+    <div id="emptyState" class="hidden flex-col items-center justify-center p-12 text-center bg-white border border-dashed border-slate-300 rounded-2xl">
+      <div class="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center mb-4">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+      </div>
+      <p id="emptyStateMessage" class="text-base font-medium text-slate-700">no books yet. add your first book.</p>
+      <p class="text-xs text-slate-400 mt-1 max-w-xs">Use the form above to record books required for courses, seminars, or recreational reading.</p>
+    </div>
+  </main>
+
+  <div id="editModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-6 animate-in fade-in zoom-in duration-150">
+      <h3 class="text-lg font-bold text-slate-900 mb-1">Edit Book Details</h3>
+      <p class="text-xs text-slate-500 mb-4">Update the book title or current status.</p>
+      
+      <!-- Duplicate Warning inside modal -->
+      <div id="modalDuplicateAlert" class="hidden mb-4 p-3 bg-amber-50 border border-amber-300 text-amber-900 rounded-xl text-xs">
+        Another book with this title already exists. Please choose a distinct title.
+      </div>
+
+      <form id="editBookForm" class="space-y-4">
+        <input type="hidden" id="editBookId">
+        <div>
+          <label for="editBookTitleInput" class="block text-xs font-semibold text-slate-700 mb-1">Book Title</label>
+          <input 
+            type="text" 
+            id="editBookTitleInput" 
+            required 
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition"
+          />
+        </div>
+        <div>
+          <label for="editBookStatusInput" class="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+          <select 
+            id="editBookStatusInput" 
+            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white font-medium text-slate-700 transition"
+          >
+            <option value="to-read">To Read</option>
+            <option value="reading">Reading</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+        <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+          <button 
+            type="button" 
+            id="modalDeleteBtn" 
+            class="px-3 py-2 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 transition"
+          >
+            Delete Book
+          </button>
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              id="cancelEditBtn" 
+              class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              class="px-5 py-2 rounded-xl text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'campus_reading_list_items';
+
+    // 3 initial default books across the statuses
+    const DEFAULT_BOOKS = [
+      { id: '1', title: 'Introduction to Algorithms', status: 'to-read', createdAt: Date.now() - 30000 },
+      { id: '2', title: 'Clean Code: A Handbook of Agile Software Craftsmanship', status: 'reading', createdAt: Date.now() - 20000 },
+      { id: '3', title: 'Thinking, Fast and Slow', status: 'done', createdAt: Date.now() - 10000 }
+    ];
+
+    let books = [];
+    let currentFilter = 'all';
+    let duplicateTargetId = null;
+
+    // DOM Elements
+    const addBookForm = document.getElementById('addBookForm');
+    const bookTitleInput = document.getElementById('bookTitleInput');
+    const bookStatusInput = document.getElementById('bookStatusInput');
+    const booksGrid = document.getElementById('booksGrid');
+    const emptyState = document.getElementById('emptyState');
+    const emptyStateMessage = document.getElementById('emptyStateMessage');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+
+    // Duplicate alert elements
+    const duplicateAlert = document.getElementById('duplicateAlert');
+    const duplicateAlertText = document.getElementById('duplicateAlertText');
+    const duplicateLocateBtn = document.getElementById('duplicateLocateBtn');
+    const duplicateDismissBtn = document.getElementById('duplicateDismissBtn');
+
+    // Counter elements
+    const countAll = document.getElementById('countAll');
+    const countToRead = document.getElementById('countToRead');
+    const countReading = document.getElementById('countReading');
+    const countDone = document.getElementById('countDone');
+
+    // Edit Modal elements
+    const editModal = document.getElementById('editModal');
+    const editBookForm = document.getElementById('editBookForm');
+    const editBookId = document.getElementById('editBookId');
+    const editBookTitleInput = document.getElementById('editBookTitleInput');
+    const editBookStatusInput = document.getElementById('editBookStatusInput');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const modalDeleteBtn = document.getElementById('modalDeleteBtn');
+    const modalDuplicateAlert = document.getElementById('modalDuplicateAlert');
+
+    function loadBooks() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          books = JSON.parse(stored);
+        } else {
+          books = [...DEFAULT_BOOKS];
+          saveBooks();
+        }
+      } catch (err) {
+        books = [...DEFAULT_BOOKS];
+      }
+    }
+
+    function saveBooks() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+      } catch (err) {
+        console.error('Failed to save to localStorage:', err);
+      }
+    }
+
+    function normalizeTitle(title) {
+      return title.trim().toLowerCase();
+    }
+
+    function findDuplicateBook(title, excludeId = null) {
+      const normalized = normalizeTitle(title);
+      return books.find(b => normalizeTitle(b.title) === normalized && b.id !== excludeId);
+    }
+
+    function showDuplicateAlert(duplicateBook) {
+      duplicateTargetId = duplicateBook.id;
+      duplicateAlertText.textContent = `"${duplicateBook.title}" already exists in your list (${duplicateBook.status.replace('-', ' ')}).`;
+      duplicateAlert.classList.remove('hidden');
+      duplicateAlert.classList.add('flex');
+    }
+
+    function hideDuplicateAlert() {
+      duplicateAlert.classList.add('hidden');
+      duplicateAlert.classList.remove('flex');
+      duplicateTargetId = null;
+    }
+
+    function getStatusBadgeConfig(status) {
+      switch (status) {
+        case 'to-read':
+          return { label: 'To Read', classes: 'badge-to-read' };
+        case 'reading':
+          return { label: 'Reading', classes: 'badge-reading' };
+        case 'done':
+          return { label: 'Done', classes: 'badge-done' };
+        default:
+          return { label: 'To Read', classes: 'badge-to-read' };
+      }
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function updateCounts() {
+      const allCount = books.length;
+      const toReadCount = books.filter(b => b.status === 'to-read').length;
+      const readingCount = books.filter(b => b.status === 'reading').length;
+      const doneCount = books.filter(b => b.status === 'done').length;
+
+      countAll.textContent = allCount;
+      countToRead.textContent = toReadCount;
+      countReading.textContent = readingCount;
+      countDone.textContent = doneCount;
+    }
+
+    function render() {
+      updateCounts();
+
+      const filteredBooks = books.filter(book => {
+        if (currentFilter === 'all') return true;
+        return book.status === currentFilter;
+      });
+
+      if (books.length === 0) {
+        booksGrid.innerHTML = '';
+        emptyStateMessage.textContent = 'no books yet. add your first book.';
+        emptyState.classList.remove('hidden');
+        emptyState.classList.add('flex');
+        return;
+      }
+
+      if (filteredBooks.length === 0) {
+        booksGrid.innerHTML = '';
+        emptyStateMessage.textContent = `No books marked as "${currentFilter.replace('-', ' ')}".`;
+        emptyState.classList.remove('hidden');
+        emptyState.classList.add('flex');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      emptyState.classList.remove('flex');
+
+      booksGrid.innerHTML = filteredBooks.map(book => {
+        const badge = getStatusBadgeConfig(book.status);
+        return `
+          <div id="card-${book.id}" class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between group">
+            <div>
+              <div class="flex items-start justify-between gap-3 mb-3">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${badge.classes}">
+                  ${badge.label}
+                </span>
+                
+                <div class="flex items-center gap-1">
+                  <!-- Edit Button -->
+                  <button 
+                    onclick="openEditModal('${book.id}')"
+                    class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition" 
+                    title="Edit book"
+                    aria-label="Edit book"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                  
+                  <!-- Delete Button -->
+                  <button 
+                    onclick="deleteBook('${book.id}')"
+                    class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition" 
+                    title="Delete book"
+                    aria-label="Delete book"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <h3 class="font-semibold text-slate-900 text-base leading-snug line-clamp-3 mb-4" title="${escapeHtml(book.title)}">
+                ${escapeHtml(book.title)}
+              </h3>
+            </div>
+
+            <!-- Inline status switcher -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+              <label for="status-select-${book.id}" class="text-xs font-medium text-slate-500">Change Status:</label>
+              <select 
+                id="status-select-${book.id}"
+                onchange="changeStatus('${book.id}', this.value)"
+                class="text-xs font-medium bg-slate-50 border border-slate-200 text-slate-700 py-1.5 px-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition cursor-pointer"
+              >
+                <option value="to-read" ${book.status === 'to-read' ? 'selected' : ''}>To Read</option>
+                <option value="reading" ${book.status === 'reading' ? 'selected' : ''}>Reading</option>
+                <option value="done" ${book.status === 'done' ? 'selected' : ''}>Done</option>
+              </select>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    addBookForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const rawTitle = bookTitleInput.value.trim();
+      const status = bookStatusInput.value;
+      if (!rawTitle) return;
+
+      // Duplicate title check
+      const duplicate = findDuplicateBook(rawTitle);
+      if (duplicate) {
+        showDuplicateAlert(duplicate);
+        return;
+      }
+
+      hideDuplicateAlert();
+
+      const newBook = {
+        id: Date.now().toString(),
+        title: rawTitle,
+        status,
+        createdAt: Date.now()
+      };
+
+      books.unshift(newBook);
+      saveBooks();
+      render();
+
+      bookTitleInput.value = '';
+      bookTitleInput.focus();
+    });
+
+    duplicateDismissBtn.addEventListener('click', hideDuplicateAlert);
+
+    duplicateLocateBtn.addEventListener('click', () => {
+      if (!duplicateTargetId) return;
+
+      const targetBook = books.find(b => b.id === duplicateTargetId);
+      if (!targetBook) return;
+
+      // If active filter hides this card, switch to 'all'
+      if (currentFilter !== 'all' && currentFilter !== targetBook.status) {
+        setFilter('all');
+      }
+
+      setTimeout(() => {
+        const cardElem = document.getElementById(`card-${duplicateTargetId}`);
+        if (cardElem) {
+          cardElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          cardElem.classList.remove('card-highlighted');
+          // Force reflow for animation restart
+          void cardElem.offsetWidth;
+          cardElem.classList.add('card-highlighted');
+          setTimeout(() => {
+            cardElem.classList.remove('card-highlighted');
+          }, 3000);
+        }
+      }, 50);
+    });
+
+    window.changeStatus = function(id, newStatus) {
+      const book = books.find(b => b.id === id);
+      if (book) {
+        book.status = newStatus;
+        saveBooks();
+        render();
+      }
+    };
+
+    window.deleteBook = function(id) {
+      books = books.filter(b => b.id !== id);
+      if (duplicateTargetId === id) {
+        hideDuplicateAlert();
+      }
+      saveBooks();
+      render();
+    };
+
+    window.openEditModal = function(id) {
+      const book = books.find(b => b.id === id);
+      if (!book) return;
+
+      editBookId.value = book.id;
+      editBookTitleInput.value = book.title;
+      editBookStatusInput.value = book.status;
+      modalDuplicateAlert.classList.add('hidden');
+      editModal.classList.remove('hidden');
+      editModal.classList.add('flex');
+      editBookTitleInput.focus();
+    };
+
+    function closeEditModal() {
+      editModal.classList.add('hidden');
+      editModal.classList.remove('flex');
+      modalDuplicateAlert.classList.add('hidden');
+      editBookForm.reset();
+    }
+
+    cancelEditBtn.addEventListener('click', closeEditModal);
+
+    modalDeleteBtn.addEventListener('click', () => {
+      const id = editBookId.value;
+      if (id) {
+        window.deleteBook(id);
+        closeEditModal();
+      }
+    });
+
+    editBookForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = editBookId.value;
+      const updatedTitle = editBookTitleInput.value.trim();
+      const updatedStatus = editBookStatusInput.value;
+      if (!updatedTitle) return;
+
+      // Duplicate check within edit modal (excluding self)
+      const duplicate = findDuplicateBook(updatedTitle, id);
+      if (duplicate) {
+        modalDuplicateAlert.classList.remove('hidden');
+        return;
+      }
+
+      const book = books.find(b => b.id === id);
+      if (book) {
+        book.title = updatedTitle;
+        book.status = updatedStatus;
+        saveBooks();
+        render();
+      }
+      closeEditModal();
+    });
+
+    editModal.addEventListener('click', (e) => {
+      if (e.target === editModal) {
+        closeEditModal();
+      }
+    });
+
+    function setFilter(filterType) {
+      currentFilter = filterType;
+      filterButtons.forEach(b => {
+        if (b.dataset.filter === filterType) {
+          b.classList.add('bg-slate-900', 'text-white', 'shadow-sm');
+          b.classList.remove('bg-white', 'text-slate-600', 'border', 'border-slate-200');
+          const countBadge = b.querySelector('span:last-child');
+          if (countBadge) {
+            countBadge.classList.add('bg-slate-800', 'text-slate-100');
+            countBadge.classList.remove('bg-slate-100', 'text-slate-700');
+          }
+        } else {
+          b.classList.remove('bg-slate-900', 'text-white', 'shadow-sm');
+          b.classList.add('bg-white', 'text-slate-600', 'border', 'border-slate-200');
+          const countBadge = b.querySelector('span:last-child');
+          if (countBadge) {
+            countBadge.classList.remove('bg-slate-800', 'text-slate-100');
+            countBadge.classList.add('bg-slate-100', 'text-slate-700');
+          }
+        }
+      });
+      render();
+    }
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        setFilter(btn.dataset.filter);
+      });
+    });
+
+    loadBooks();
+    render();
+  </script>
+</body>
+</html>
